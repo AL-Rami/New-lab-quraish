@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة المعمل الذكي - ثانوية قريش | التقرير التنفيذي والمستكشف التفاعلي</title>
+
+    <!-- Chosen Palette: Emerald & Warm Slate Modern Laboratory Palette -->
+    <!-- Application Structure Plan: Designed as an executive interactive single-page app (SPA) with 6 integrated analytical and operational modules:
+         1. Executive Dashboard (KPIs, active sessions, and high-level platform status).
+         2. Interactive Experiment Catalog & QR Scanner Simulator (Dynamic filterable repository connected to SISC_Commands database).
+         3. Power Apps Architecture & Code Blueprint (Interactive Canvas Studio inspector with live Power Fx code copier).
+         4. Analytics & Performance Metrics (Dynamic Chart.js charts for experiment execution times, safety compliance, and student engagement).
+         5. Virtual Lab Experiment Simulator (Live interactive execution workflow with timer, photo upload, and student reflection logs).
+         6. AI Safety & Guidance Center (Gemini AI assistant simulation with interactive safety checklists).
+         This structure translates theoretical technical documentation into an immersive, hands-on administrative and educational portal. -->
+    <!-- Visualization & Content Choices:
+         - Chart.js Bar Chart for experiment completion times by subject.
+         - Chart.js Radar/Doughnut Chart for safety compliance and risk assessment.
+         - Chart.js Line Chart for weekly active student sessions.
+         - Interactive HTML/CSS Cards with FontAwesome icons for tools, steps, and status.
+         - Dynamic JavaScript state management for QR code simulation and Power Fx code inspection.
+         - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. Canvas rendering for all charts. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome CDN (Icons without SVG) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            green: '#00b862',
+                            darkGreen: '#008a49',
+                            lightGreen: '#e6f8f0',
+                            navy: '#0f172a',
+                            slate: '#1e293b',
+                            accent: '#3b82f6',
+                            purple: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Embedded minimal CSS for Chart containers & Glassmorphism */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .qr-pulse {
+            animation: pulse-ring 2.5s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(0, 184, 98, 0.6); }
+            70% { box-shadow: 0 0 0 18px rgba(0, 184, 98, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 184, 98, 0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .active-tab {
+            border-bottom: 3px solid #00b862;
+            color: #00b862;
+            font-weight: 800;
+        }
+
+        .toast-notif {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+        }
+        .toast-notif.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-green selection:text-white">
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="toast-notif bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 font-bold text-sm">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-brand-green text-xl"></i>
+        <span id="toastMsg">تمت العملية بنجاح</span>
+    </div>
+
+    <!-- Header & Navigation Bar -->
+    <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-xl border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Brand & School Info -->
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-green to-emerald-400 flex items-center justify-center text-slate-900 text-2xl shadow-lg shadow-emerald-900/50">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-black tracking-wide">منظومة المعمل الذكي</h1>
+                            <span class="bg-brand-green/20 text-brand-green border border-brand-green/40 text-[10px] px-2 py-0.5 rounded-full font-bold">New-lab-quraish v2.4</span>
+                        </div>
+                        <p class="text-xs text-slate-400 font-semibold">ثانوية قريش | إدارة التعليم بمكة المكرمة</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="hidden lg:flex items-center gap-1 font-bold text-xs text-slate-300">
+                    <button onclick="scrollToSection('dashboard')" class="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-pie text-brand-green"></i> لوحة المؤشرات
+                    </button>
+                    <button onclick="scrollToSection('catalog')" class="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-flask text-amber-400"></i> مستكشف التجارب
+                    </button>
+                    <button onclick="scrollToSection('powerapps')" class="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-cubes text-purple-400"></i> معمارية Power Apps
+                    </button>
+                    <button onclick="scrollToSection('analytics')" class="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line text-blue-400"></i> التحليلات والسلامة
+                    </button>
+                    <button onclick="scrollToSection('simulator')" class="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-vial-circle-check text-emerald-400"></i> محاكي التجربة
+                    </button>
+                </nav>
+
+                <!-- Quick Action SSO Badge -->
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+                        <i class="fa-brands fa-microsoft text-blue-400"></i>
+                        <span class="text-slate-300 font-mono text-[11px]">M365 SSO Active</span>
+                        <span class="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+                    </div>
+                    <button onclick="openQrModal()" class="bg-brand-green hover:bg-brand-darkGreen text-slate-900 font-extrabold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-qrcode text-base"></i>
+                        <span>مسح QR الذكي</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero / Introductory Banner -->
+    <section class="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white py-12 px-4 relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 text-brand-green/10 text-9xl pointer-events-none"><i class="fa-solid fa-atom"></i></div>
+        <div class="absolute bottom-0 left-10 text-blue-500/10 text-9xl pointer-events-none"><i class="fa-solid fa-dna"></i></div>
+        
+        <div class="max-w-7xl mx-auto text-center relative z-10">
+            <span class="bg-brand-green/10 text-brand-green border border-brand-green/30 text-xs px-4 py-1.5 rounded-full font-bold inline-block mb-3">
+                <i class="fa-solid fa-graduation-cap ml-1"></i> مبادرة التحول الرقمي للتعليم العملي بالرحلة المدرسية
+            </span>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 tracking-tight leading-tight">
+                منظومة المعمل الذكي والافتراضي للتجارب العلمية
+            </h2>
+            <p class="max-w-3xl mx-auto text-slate-300 text-sm sm:text-base leading-relaxed mb-8 font-medium">
+                تطبيق تنفيذي تفاعلي يجمع بين محاكاة بيئة الطالب عبر بيئة **Microsoft Power Apps Canvas**، وقواعد بيانات **SharePoint SISC_Commands**، وتقنيات القراءة الذكية بواسطة رموز الـ **QR** والذكاء الاصطناعي لتوفير تجربة تعليمية آمنة ومبتكرة لمواد الكيمياء والفيزياء والأحياء.
+            </p>
+
+            <!-- Quick Navigation Shortcuts -->
+            <div class="flex flex-wrap justify-center gap-3 text-xs font-bold">
+                <a href="#catalog" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-amber-400"></i> مستكشف التجارب (3 مواد)
+                </a>
+                <a href="#powerapps" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-code text-purple-400"></i> مجمع أكواد Power Fx
+                </a>
+                <a href="#simulator" class="bg-brand-green text-slate-900 font-extrabold px-5 py-2.5 rounded-xl hover:bg-brand-darkGreen transition flex items-center gap-2">
+                    <i class="fa-solid fa-play text-xs"></i> بدء محاكاة التجربة العملية
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+
+        <!-- SECTION 1: EXECUTIVE DASHBOARD & KPIS -->
+        <section id="dashboard" class="scroll-mt-24 space-y-6">
+            
+            <!-- Section Introductory Paragraph -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-brand-green/10 text-brand-green flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-slate-900">لوحة المؤشرات التنفيذية وحالة المنظومة</h3>
+                        <p class="text-xs font-bold text-slate-500">Executive Overview & Key Performance Indicators</p>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-600 leading-relaxed mt-2 font-medium">
+                    تقدم هذه اللوحة نظرة شاملة على أداء منظومة المختبر الذكي في ثانوية قريش، وتوضح معدلات استخدام الطلاب لرموز الـ QR الذكية، ونسب الالتزام بمعايير السلامة أثناء إجراء التجارب، وتوزيع النشاط الأكاديمي لمواد الكيمياء والفيزياء والأحياء.
+                </p>
+            </div>
+
+            <!-- Metric Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                
+                <!-- KPI 1 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-bold text-slate-500">التجارب الرقمية النشطة</span>
+                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-brand-green flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-flask"></i></span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 mb-1 font-mono">12 / 12</div>
+                    <p class="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i> تغطي كيمياء 2، فيزياء 3، أحياء 3
+                    </p>
+                </div>
+
+                <!-- KPI 2 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-bold text-slate-500">نسبة الالتزام بالمسح الذكي</span>
+                        <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-qrcode"></i></span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 mb-1 font-mono">94.8%</div>
+                    <p class="text-[11px] font-bold text-blue-600 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> +12.4% زيادة مقارنة بالفصل السابق
+                    </p>
+                </div>
+
+                <!-- KPI 3 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-bold text-slate-500">مؤشر السلامة المختبرية</span>
+                        <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-shield-halved"></i></span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 mb-1 font-mono">98.2%</div>
+                    <p class="text-[11px] font-bold text-amber-600 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i> صفر حوادث تذكر خلال التجريب
+                    </p>
+                </div>
+
+                <!-- KPI 4 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-bold text-slate-500">الطلاب المسجلون بالنظام</span>
+                        <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-user-graduate"></i></span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 mb-1 font-mono">485+</div>
+                    <p class="text-[11px] font-bold text-purple-600 flex items-center gap-1">
+                        <i class="fa-solid fa-users"></i> ربط موحد عبر M365 SSO
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 2: EXPERIMENT CATALOG & SISC_COMMANDS DATABASE -->
+        <section id="catalog" class="scroll-mt-24 space-y-6">
+            
+            <!-- Section Intro -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black text-slate-900">مستكشف التجارب وقاعدة بيانات SISC_Commands</h3>
+                            <p class="text-xs font-bold text-slate-500">Filterable Repository connected to SharePoint List</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 font-medium mt-1">
+                        يمكنك البحث والتصفية بين التجارب المتاحة في قاعدة البيانات، ومعاينة الأدوات المطلوبة والخطوات التفصيلية وملاحظات السلامة ورموز الـ QR المرتبطة بكل تجربة.
+                    </p>
+                </div>
+
+                <!-- Subject Filter Buttons -->
+                <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl self-start md:self-center">
+                    <button onclick="filterExperiments('all')" id="filter-all" class="filter-btn bg-white text-slate-900 shadow-sm px-3 py-1.5 rounded-xl text-xs font-extrabold transition">الكل</button>
+                    <button onclick="filterExperiments('كيمياء')" id="filter-chem" class="filter-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-extrabold transition">كيمياء 2</button>
+                    <button onclick="filterExperiments('فيزياء')" id="filter-phys" class="filter-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-extrabold transition">فيزياء 3</button>
+                    <button onclick="filterExperiments('أحياء')" id="filter-bio" class="filter-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-extrabold transition">أحياء 3</button>
+                </div>
+            </div>
+
+            <!-- Experiment Cards Grid -->
+            <div id="experimentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Javascript will dynamically inject experiment cards here -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: POWER APPS ARCHITECTURE & CODE BLUEPRINT -->
+        <section id="powerapps" class="scroll-mt-24 space-y-6">
+            
+            <!-- Section Intro -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-cubes"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-slate-900">معمارية البناء لـ Power Apps Studio وخصائص الـ Power Fx</h3>
+                        <p class="text-xs font-bold text-slate-500">Interactive Canvas Studio Inspector & Code Generator</p>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-600 font-medium leading-relaxed">
+                    استكشف البنية الهيكلية لشاشات التطبيق الثلاث (`LoginScreen`, `ExperimentScreen`, `RunExperimentScreen`) وقاموس الأكواد التشغيلية **Power Fx**. اضغط على أي عنصر في شجرة العناصر لمعاينة إحداثيات تصميمه وكوده البرمجي المخصص مع إمكانية النسخ المباشر.
+                </p>
+            </div>
+
+            <!-- Interactive Studio Inspector Layout -->
+            <div class="bg-slate-900 rounded-3xl border border-slate-800 p-6 text-white shadow-2xl flex flex-col lg:flex-row gap-6">
+                
+                <!-- Tree View Navigation -->
+                <div class="w-full lg:w-1/4 bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-700">
+                            <span class="text-xs font-black text-slate-300">شجرة عناصر الشاشة</span>
+                            <span class="text-[10px] bg-purple-900/60 text-purple-300 px-2 py-0.5 rounded font-mono">Tree View</span>
+                        </div>
+                        
+                        <!-- Screen Selection Tabs -->
+                        <div class="flex gap-1 mb-3 bg-slate-900 p-1 rounded-xl text-[11px] font-bold">
+                            <button onclick="switchAppScreen('login')" id="btn-scr-login" class="flex-1 py-1.5 rounded-lg bg-brand-green text-slate-900 font-black transition">Login</button>
+                            <button onclick="switchAppScreen('exp')" id="btn-scr-exp" class="flex-1 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">Experiment</button>
+                            <button onclick="switchAppScreen('run')" id="btn-scr-run" class="flex-1 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">Run</button>
+                        </div>
+
+                        <!-- Controls Tree List -->
+                        <div id="treeControlsList" class="space-y-1 font-mono text-xs">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-700 text-[10px] text-slate-400">
+                        <i class="fa-solid fa-info-circle text-amber-400 ml-1"></i> انقر على العنصر لمعاينة برمجته.
+                    </div>
+                </div>
+
+                <!-- Canvas Visual Preview Box -->
+                <div class="w-full lg:w-2/4 bg-slate-950 rounded-2xl p-4 border border-slate-800 flex items-center justify-center relative min-h-[420px] overflow-hidden">
+                    
+                    <!-- Simulated Canvas Device Screen -->
+                    <div id="canvasDeviceView" class="w-[340px] h-[480px] bg-slate-900 rounded-[28px] border-4 border-slate-700 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center p-4">
+                        <!-- Canvas View Content Injected dynamically -->
+                    </div>
+
+                </div>
+
+                <!-- Property Inspector & Power Fx Code -->
+                <div class="w-full lg:w-1/4 bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-700">
+                            <span class="text-xs font-black text-slate-300">لوحة الخصائص والكود</span>
+                            <span id="activeControlTag" class="text-[10px] bg-brand-green/20 text-brand-green px-2 py-0.5 rounded font-mono font-bold">Control</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 block mb-1">اسم العنصر (Control Name)</label>
+                                <input id="inspectorControlName" type="text" readonly class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-purple-300 font-bold">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] font-bold text-emerald-400">كود Power Fx</label>
+                                    <button onclick="copyPowerFxCode()" class="text-[10px] bg-brand-green/20 hover:bg-brand-green/30 text-brand-green px-2 py-0.5 rounded transition font-bold flex items-center gap-1">
+                                        <i class="fa-regular fa-copy"></i> نسخ
+                                    </button>
+                                </div>
+                                <pre id="inspectorPowerFx" class="bg-slate-950 border border-slate-700 rounded-xl p-3 font-mono text-[11px] text-emerald-300 leading-relaxed overflow-x-auto h-44 whitespace-pre-wrap selection:bg-brand-green selection:text-slate-900">// اختر عنصراً لمعاينة البرمجة</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700 text-[10px] text-slate-300 leading-relaxed mt-4">
+                        <p id="inspectorControlDesc">استخدم هذا الأسلوب للربط التلقائي بقوائم SharePoint وحزمة Microsoft 365 SSO.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 4: ANALYTICS & PERFORMANCE CHARTS -->
+        <section id="analytics" class="scroll-mt-24 space-y-6">
+            
+            <!-- Section Intro -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black text-slate-900">تحليلات الأداء ومؤشرات السلامة المختبرية</h3>
+                            <p class="text-xs font-bold text-slate-500">Interactive Visual Analytics powered by Chart.js (No SVG used)</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 font-medium mt-1">
+                        رسوم بيانية تفاعلية تستعرض زمن إنجاز التجارب، ومؤشرات الالتزام بمعايير السلامة، والنشاط الأسبوعي للطلاب عبر البوابة.
+                    </p>
+                </div>
+
+                <!-- Interactive Subject Switcher for Charts -->
+                <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl">
+                    <button onclick="updateChartDataset('all')" id="chart-btn-all" class="chart-tab bg-white text-slate-900 shadow-sm px-3 py-1.5 rounded-xl text-xs font-extrabold transition">كافة المواد</button>
+                    <button onclick="updateChartDataset('chem')" id="chart-btn-chem" class="chart-tab text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-extrabold transition">الكيمياء</button>
+                    <button onclick="updateChartDataset('phys')" id="chart-btn-phys" class="chart-tab text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-extrabold transition">الفيزياء</button>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Chart 1: Completion Time -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-black text-slate-800 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-clock text-brand-green"></i> متوسط زمن إنجاز التجربة (بالدقائق)
+                            </h4>
+                            <span class="text-xs text-slate-400 font-bold">عبر الكاميرا والمستكشف</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="timeChart"></canvas>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        * توضح البيانات أن أسرع تجربة تنفيذاً هي "تحقيق قانون أوم" بمتوسط 8 دقائق فقط.
+                    </p>
+                </div>
+
+                <!-- Chart 2: Safety Radar -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-black text-slate-800 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-amber-500"></i> مؤشر الالتزام ببروتوكولات السلامة
+                            </h4>
+                            <span class="text-xs text-slate-400 font-bold">تقييم الأداء</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="safetyChart"></canvas>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        * يرتفع مؤشر السلامة إلى 99% عند تفعيل التنبيهات الصوتية والتذكير بالنظارات الواقية.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Chart 3: Weekly Active Sessions Line Chart -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-black text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-chart-area text-purple-600"></i> نشاط جلسات الطلاب الأسبوعية على البوابة الذكية
+                    </h4>
+                    <span class="text-xs text-slate-400 font-bold">الفصل الدراسي الحالي</span>
+                </div>
+                <div class="chart-container" style="max-width: 100%; height: 280px;">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: VIRTUAL LAB EXPERIMENT SIMULATOR -->
+        <section id="simulator" class="scroll-mt-24 space-y-6">
+            
+            <!-- Section Intro -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-brand-green flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-vial-circle-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-slate-900">محاكي تنفيذ التجربة العملية التفاعلي</h3>
+                        <p class="text-xs font-bold text-slate-500">Live Virtual Lab Execution Workbench (RunExperimentScreen Simulation)</p>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-600 font-medium leading-relaxed">
+                    هنا يمكن للطالب تنفيذ خطوات التجربة المختارة عملياً، وإدارة المؤقت الزمني، والتقاط صورة للنتيجة النهائية، وتدوين الملاحظات والاستنتاجات العلمية لإرسالها للمعلم.
+                </p>
+            </div>
+
+            <!-- Simulator Workbench Container -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-lg p-6 sm:p-8 relative overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Right Column: Interactive Steps -->
+                    <div class="space-y-6">
+                        
+                        <!-- Selected Experiment Header -->
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <div>
+                                <span id="simSubjectBadge" class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-block mb-1">كيمياء 2</span>
+                                <h4 id="simTitle" class="text-2xl font-black text-slate-800">قانون لوشاتلييه (أثر الحرارة على الاتزان)</h4>
+                            </div>
+                            <button onclick="openQrModal()" class="text-xs font-bold text-brand-green hover:underline flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-rotate"></i> تغيير التجربة
+                            </button>
+                        </div>
+
+                        <!-- Step-by-Step Workflow -->
+                        <div>
+                            <h5 class="text-xs font-black text-slate-500 mb-3 uppercase tracking-wider">خطوات التنفيذ التفاعلية:</h5>
+                            <div class="space-y-3" id="simStepsContainer">
+                                <!-- Steps injected dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Video Reference -->
+                        <div class="bg-slate-900 rounded-2xl p-4 text-white relative overflow-hidden group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white text-lg">
+                                        <i class="fa-brands fa-youtube"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-xs font-bold">الشرح المرئي المرفق للتجربة</h6>
+                                        <p class="text-[10px] text-slate-400">فيديو توضيحي خطوة بخطوة</p>
+                                    </div>
+                                </div>
+                                <button onclick="triggerToast('جاري فتح دليل الفيديو...', 'info')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                                    مشاهدة
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Left Column: Controls, Timer & Photo Submission -->
+                    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 flex flex-col justify-between space-y-6">
+                        
+                        <!-- Timer Box -->
+                        <div class="bg-slate-900 rounded-2xl p-5 text-center text-white shadow-inner relative overflow-hidden">
+                            <div class="absolute top-0 right-0 left-0 h-1 bg-slate-800">
+                                <div id="timerProgressBar" class="h-full bg-brand-green transition-all duration-1000" style="width: 100%"></div>
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-400">المؤقت الزمني الافتراضي للتجربة</span>
+                            <div id="simTimerDisplay" class="text-5xl font-black font-mono tracking-widest my-2 text-brand-green">10:00</div>
+                            <div class="flex justify-center gap-2 mt-3">
+                                <button onclick="startSimTimer()" class="bg-brand-green hover:bg-brand-darkGreen text-slate-900 px-4 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1">
+                                    <i class="fa-solid fa-play"></i> ابدأ
+                                </button>
+                                <button onclick="pauseSimTimer()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition">
+                                    <i class="fa-solid fa-pause"></i> إيقاف
+                                </button>
+                                <button onclick="resetSimTimer()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold transition">
+                                    إعادة
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Photo Capture / Evidence -->
+                        <div>
+                            <label class="text-xs font-black text-slate-800 block mb-2">
+                                <i class="fa-solid fa-camera text-brand-green ml-1"></i> توثيق النتيجة (التقاط صورة بالأجهزة المحمولة):
+                            </label>
+                            <div onclick="simulatePhotoCapture()" class="border-2 border-dashed border-slate-300 hover:border-brand-green bg-white rounded-2xl p-4 text-center cursor-pointer transition group">
+                                <div id="photoCaptureBox">
+                                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 group-hover:text-brand-green mb-1 transition"></i>
+                                    <p class="text-xs font-bold text-slate-600">اضغط هنا لالتقاط أو رفع صورة التجربة</p>
+                                    <span class="text-[10px] text-slate-400 font-semibold">تُحفظ الصورة تلقائياً في قائمة SharePoint</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reflections & Notes -->
+                        <div>
+                            <label class="text-xs font-black text-slate-800 block mb-2">
+                                <i class="fa-solid fa-pen-to-square text-brand-green ml-1"></i> ملاحظات واستنتاجات الطالب:
+                            </label>
+                            <textarea id="simReflectionText" rows="3" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-green resize-none placeholder-slate-400" placeholder="ماذا لاحظت عند تغيير درجة الحرارة أو تركيز المواد؟..."></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button onclick="submitExperimentResults()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3.5 rounded-xl font-black text-sm shadow-xl transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane text-brand-green"></i>
+                            إرسال تقرير التجربة وإنهاء التقييم
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: GEMINI AI ASSISTANT & SAFETY PROTOCOLS -->
+        <section id="ai-safety" class="scroll-mt-24 space-y-6 mb-12">
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                    
+                    <div class="space-y-3 max-w-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-purple-400 animate-pulse"></span>
+                            <span class="text-xs font-bold text-purple-300 font-mono">Gemini AI Lab Assistant Integrations</span>
+                        </div>
+                        <h3 class="text-2xl font-black">المساعد الذكي للسلامة والإرشادات الفورية</h3>
+                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+                            تم تزويد المعمل الذكي بمساعد ذكي مدعوم بالذكاء الاصطناعي للإجابة عن أسئلة السلامة الخاصة بالتجربة قبل البدء بها، والتحقق من التزام الطلاب بالقفازات والنظارات الواقية.
+                        </p>
+                        
+                        <!-- Quick Question Chips -->
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            <button onclick="askGemini('ما هي مخاطر مادة كلوريد الكوبالت؟')" class="bg-white/10 hover:bg-white/20 text-xs px-3 py-1.5 rounded-xl font-bold transition">
+                                🧪 مخاطر كلوريد الكوبالت؟
+                            </button>
+                            <button onclick="askGemini('كيف أتصرف عند ملامسة الحمض للبشرة؟')" class="bg-white/10 hover:bg-white/20 text-xs px-3 py-1.5 rounded-xl font-bold transition">
+                                ⚠️ الإسعافات الأولية الأحماض؟
+                            </button>
+                            <button onclick="askGemini('ما فائدة استخدام الكحول البارد في تجربة الـ DNA؟')" class="bg-white/10 hover:bg-white/20 text-xs px-3 py-1.5 rounded-xl font-bold transition">
+                                🧬 فائدة الكحول البارد؟
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant Chat Box -->
+                    <div class="w-full md:w-80 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 flex flex-col h-64 justify-between">
+                        <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                            <span class="text-xs font-bold text-purple-300"><i class="fa-solid fa-sparkles ml-1"></i> Gemini AI Assistant</span>
+                            <span class="text-[9px] bg-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded-full font-bold">نشط الان</span>
+                        </div>
+
+                        <!-- Chat Response Bubble -->
+                        <div id="aiChatBubble" class="my-2 bg-slate-900/80 p-3 rounded-xl border border-white/10 text-xs text-slate-200 leading-relaxed overflow-y-auto flex-1 font-medium">
+                            أهلاً بك يا بطل! أنا مساعدك الذكي في معمل ثانوية قريش. اختر سؤالاً أو اسألني عن معايير السلامة الخاصة بتجربتك!
+                        </div>
+
+                        <!-- Chat Input -->
+                        <div class="flex gap-1.5">
+                            <input id="aiInput" type="text" placeholder="اسأل المساعد الذكي..." class="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-400 focus:outline-none">
+                            <button onclick="sendUserAiQuestion()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-xs font-bold transition">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand-green/20 text-brand-green flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-slate-200">منظومة المعمل الذكي (New-lab-quraish)</p>
+                    <p class="text-[10px]">ثانوية قريش - المملكة العربية السعودية © 2026</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-[11px] font-bold">
+                <span>Microsoft Power Apps Canvas</span>
+                <span>•</span>
+                <span>SharePoint Database</span>
+                <span>•</span>
+                <span>Gemini AI Integration</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- QR CODE SCANNER MODAL SIMULATOR -->
+    <div id="qrModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center border border-slate-200 shadow-2xl relative">
+            <button onclick="closeQrModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-700 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-20 h-20 rounded-2xl bg-brand-green/10 text-brand-green flex items-center justify-center text-3xl mx-auto mb-3 qr-pulse">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+
+            <h4 class="text-lg font-black text-slate-900 mb-1">ماسح الـ QR الذكي (br_QRScanner)</h4>
+            <p class="text-xs text-slate-500 font-medium mb-4">اختر كود التجربة لمحاكاة القراءة التلقائية من الكاميرا:</p>
+
+            <!-- Quick Code Select Buttons -->
+            <div class="space-y-2 mb-6">
+                <button onclick="simulateQrScan('CHEM-LE-CHATELIER-01')" class="w-full bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-brand-green p-2.5 rounded-xl text-xs font-bold text-slate-800 flex items-center justify-between transition">
+                    <span>🧪 CHEM-LE-CHATELIER-01</span>
+                    <span class="text-[10px] text-brand-green">كيمياء 2</span>
+                </button>
+                <button onclick="simulateQrScan('PHYS-OHM-02')" class="w-full bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-500 p-2.5 rounded-xl text-xs font-bold text-slate-800 flex items-center justify-between transition">
+                    <span>⚡ PHYS-OHM-02</span>
+                    <span class="text-[10px] text-blue-600">فيزياء 3</span>
+                </button>
+                <button onclick="simulateQrScan('BIO-DNA-EXTRACT-03')" class="w-full bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-500 p-2.5 rounded-xl text-xs font-bold text-slate-800 flex items-center justify-between transition">
+                    <span>🧬 BIO-DNA-EXTRACT-03</span>
+                    <span class="text-[10px] text-purple-600">أحياء 3</span>
+                </button>
+            </div>
+
+            <button onclick="closeQrModal()" class="w-full bg-slate-900 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-slate-800 transition">
+                إلغاء
+            </button>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC & STATE MANAGEMENT -->
+    <script>
+        // ----------------------------------------------------
+        // Base Data Storage (SISC_Commands SharePoint List Replica)
+        // ----------------------------------------------------
+        const siscCommandsData = [
+            {
+                id: 'chem-1',
+                title: 'قانون لوشاتلييه (أثر الحرارة على الاتزان)',
+                subject: 'كيمياء 2',
+                subjectKey: 'كيمياء',
+                badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                btnColor: 'bg-brand-green hover:bg-brand-darkGreen',
+                qrCode: 'CHEM-LE-CHATELIER-01',
+                tools: 'أنابيب اختبار، كلوريد الكوبالت الثنائي، ماء ساخن، حمام ثلجي، ماصة.',
+                steps: [
+                    'ضع 5 مل من محلول كلوريد الكوبالت في الأنبوب الأول.',
+                    'سخن الأنبوب برفق في حمام مائي ساخن ولاحظ تغير اللون للأزرق.',
+                    'ضع الأنبوب في حمام جليدي ولاحظ عودة اللون الوردي.'
+                ],
+                safety: 'ارتداء النظارات الواقية والقفازات وتجنب لمس الأنابيب الساخنة مباشرة.',
+                videoLink: 'https://youtube.com/watch?v=mock_chem',
+                pdfLink: 'Chem_LeChatelier_Guide.pdf',
+                timeMinutes: 10
+            },
+            {
+                id: 'phys-1',
+                title: 'تحقيق قانون أوم (التوالي والتوازي)',
+                subject: 'فيزياء 3',
+                subjectKey: 'فيزياء',
+                badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+                btnColor: 'bg-blue-600 hover:bg-blue-700',
+                qrCode: 'PHYS-OHM-02',
+                tools: 'لوحة تجارب، أسلاك توصيل، مقاومة ثابتة، أميتر رقمي، فولتمتر، مصدر جهد مستمر.',
+                steps: [
+                    'صل المقاومة على التوالي مع الأميتر ومصدر الجهد.',
+                    'صل الفولتمتر على التوازي بين طرفي المقاومة.',
+                    'غير الجهد تدريجياً وسجل القراءات لحساب المقاومة R = V/I.'
+                ],
+                safety: 'تأكد من إغلاق الدائرة الكهربائية قبل لمس التوصيلات وتجنب التيارات العالية.',
+                videoLink: 'https://youtube.com/watch?v=mock_phys',
+                pdfLink: 'Phys_Ohm_Law.pdf',
+                timeMinutes: 8
+            },
+            {
+                id: 'bio-1',
+                title: 'استخلاص الحمض النووي (DNA) من الفراولة',
+                subject: 'أحياء 3',
+                subjectKey: 'أحياء',
+                badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+                btnColor: 'bg-purple-600 hover:bg-purple-700',
+                qrCode: 'BIO-DNA-EXTRACT-03',
+                tools: 'فراولة، كيس بلاستيكي، سائل غسيل الأطباق، ملح، ماء دافئ، كحول إيثيلي بارد جداً، مرشح قهوة.',
+                steps: [
+                    'اهرس الفراولة في الكيس البلاستيكي جيداً.',
+                    'أضف محلول الاستخلاص (ماء وصابون وملح) واخلطه برفق.',
+                    'صف الخليط بمرشح القهوة في أنبوب، ثم اسكب الكحول البارد ببطء لرؤية الخيوط البيضاء.'
+                ],
+                safety: 'الكحول سريع الاشتعال، يجب إبقاؤه بعيداً عن أي مصادر للحرارة أو اللهب المباشر.',
+                videoLink: 'https://youtube.com/watch?v=mock_bio',
+                pdfLink: 'Bio_DNA_Extraction.pdf',
+                timeMinutes: 12
+            }
+        ];
+
+        // Power Apps Controls Data Blueprint
+        const powerAppsScreensData = {
+            login: {
+                controls: [
+                    { name: 'LoginScreen', type: 'Screen', fx: '// الشاشة الرئيسية لتسجيل الدخول\nSet(CurrentStudent, User().Email);', desc: 'شاشة البداية المزودة بدعم SSO وقارئ الـ QR.' },
+                    { name: 'con_LoginCard', type: 'Container', fx: 'Fill = RGBA(255, 255, 255, 0.85)\nBorderRadius = 24\nDropShadow = DropShadow.Bold', desc: 'الحاوية الزجاجية المركزية العائمة.' },
+                    { name: 'br_QRScanner', type: 'BarcodeReader', fx: 'OnScan =\nSet(SelectedExperiment, LookUp(SISC_Commands, QRCode = First(br_QRScanner.Barcodes).Value));\nNavigate(ExperimentScreen);', desc: 'عنصر قراءة الباركود ورموز الاستجابة السريعة.' },
+                    { name: 'con_SSO_Box', type: 'Container', fx: 'Text = User().Email\n// SSO Auto Authentication', desc: 'حقل التعرف التلقائي الموحد عبر حساب مايكروسوفت.' }
+                ],
+                viewHtml: `
+                    <div class="glass-panel w-full rounded-2xl p-4 text-center border border-white/40 shadow-xl">
+                        <div class="w-10 h-10 rounded-xl bg-brand-green/20 text-brand-green flex items-center justify-center mx-auto mb-2 text-lg"><i class="fa-solid fa-qrcode"></i></div>
+                        <h5 class="text-xs font-black text-slate-800">بوابة الدخول SSO</h5>
+                        <p class="text-[9px] text-slate-500 font-mono mb-3">Student@quraish.edu.sa</p>
+                        <div class="bg-brand-green text-slate-900 text-xs font-black py-2 rounded-xl shadow cursor-pointer">مسح رمز QR</div>
+                    </div>
+                `
+            },
+            exp: {
+                controls: [
+                    { name: 'ExperimentScreen', type: 'Screen', fx: 'OnVisible = Set(SelectedExperiment, LookUp(SISC_Commands, QRCode = ScanResult));', desc: 'شاشة تفاصيل التجربة والأدوات والشرح.' },
+                    { name: 'lbl_Title', type: 'Label', fx: 'Text = SelectedExperiment.Title\nColor = ColorValue("#00b862")', desc: 'عنوان التجربة الديناميكي من الشيربوينت.' },
+                    { name: 'vid_Player', type: 'Video', fx: 'Media = SelectedExperiment.VideoLink\nVisible = !IsBlank(SelectedExperiment.VideoLink)', desc: 'مشغل الشرح المرئي لتجربة الطالب.' },
+                    { name: 'btn_Start', type: 'Button', fx: 'OnSelect = Navigate(RunExperimentScreen, ScreenTransition.Fade);', desc: 'زر للانتقال المباشر لشاشة محاكاة التقييم العملي.' }
+                ],
+                viewHtml: `
+                    <div class="bg-white/90 rounded-2xl p-4 w-full text-right border border-slate-200">
+                        <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">كيمياء 2</span>
+                        <h5 class="text-xs font-black text-slate-900 mt-1">قانون لوشاتلييه</h5>
+                        <p class="text-[9px] text-slate-500 my-2">الأدوات: أنابيب اختبار، كلوريد الكوبالت...</p>
+                        <div class="bg-slate-900 text-white text-[10px] font-bold py-1.5 text-center rounded-lg">بدء التجربة العملية</div>
+                    </div>
+                `
+            },
+            run: {
+                controls: [
+                    { name: 'RunExperimentScreen', type: 'Screen', fx: 'Set(TimerVal, 600); // 10 Minutes Timer', desc: 'شاشة المحاكاة والتنفيذ المباشر للتجربة.' },
+                    { name: 'con_TimerBox', type: 'Container', fx: 'Text = Text(Time(0, 0, TimerVal), "mm:ss")', desc: 'العداد الزمني لتحديد وقت التجربة.' },
+                    { name: 'cam_Capture', type: 'Camera', fx: 'OnSelect = UpdateContext({StudentPhoto: cam_Capture.Photo})', desc: 'التقاط الصورة وتوثيق النتيجة.' },
+                    { name: 'txt_Notes', type: 'TextInput', fx: 'HintText = "سجل استنتاجاتك هنا..."', desc: 'حقل تدوين ملاحظات الطالب العلمية.' }
+                ],
+                viewHtml: `
+                    <div class="bg-slate-900 text-white rounded-2xl p-4 w-full text-center">
+                        <div class="text-xl font-mono font-bold text-brand-green mb-1">09:45</div>
+                        <p class="text-[9px] text-slate-400 mb-2">جاري تنفيذ خطوات التجربة...</p>
+                        <div class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-[9px] text-slate-300">توثيق الصورة المرفقة ✅</div>
+                    </div>
+                `
+            }
+        };
+
+        // Current Application State
+        let currentSelectedExperiment = siscCommandsData[0];
+        let simTimerInterval = null;
+        let simTimeLeft = 600; // 10 mins
+        let activeChartSubject = 'all';
+
+        // Chart.js Instances
+        let timeChartInstance = null;
+        let safetyChartInstance = null;
+        let activityChartInstance = null;
+
+        // ----------------------------------------------------
+        // DOM Initialization & Rendering
+        // ----------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            renderExperimentCatalog('all');
+            switchAppScreen('login');
+            renderSimulatorWorkbench(currentSelectedExperiment);
+            initCharts();
+        });
+
+        // ----------------------------------------------------
+        // Section 2: Experiment Catalog Logic
+        // ----------------------------------------------------
+        function renderExperimentCatalog(filterKey) {
+            const grid = document.getElementById('experimentsGrid');
+            grid.innerHTML = '';
+
+            const filteredData = filterKey === 'all' 
+                ? siscCommandsData 
+                : siscCommandsData.filter(item => item.subjectKey === filterKey);
+
+            filteredData.forEach(exp => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs font-bold px-3 py-1 rounded-full border ${exp.badgeColor}">${exp.subject}</span>
+                            <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">${exp.qrCode}</span>
+                        </div>
+                        <h4 class="text-lg font-black text-slate-900 mb-2">${exp.title}</h4>
+                        
+                        <div class="space-y-2 mb-4 text-xs text-slate-600">
+                            <p class="font-medium"><strong class="text-slate-800"><i class="fa-solid fa-toolbox text-amber-500 ml-1"></i> الأجهزة والخاصيات:</strong> ${exp.tools}</p>
+                            <p class="font-medium"><strong class="text-slate-800"><i class="fa-solid fa-shield-halved text-red-500 ml-1"></i> تنبيه السلامة:</strong> ${exp.safety}</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <button onclick="loadExperimentToSimulator('${exp.id}')" class="${exp.btnColor} text-white font-extrabold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-play text-[10px]"></i> محاكاة التجربة
+                        </button>
+                        <button onclick="openQrModalWithCode('${exp.qrCode}')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 p-2 rounded-xl text-xs transition" title="عرض رمز QR">
+                            <i class="fa-solid fa-qrcode text-base"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterExperiments(subject) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-extrabold transition';
+            });
+            const activeBtn = document.getElementById(`filter-${subject === 'all' ? 'all' : subject === 'كيمياء' ? 'chem' : subject === 'فيزياء' ? 'phys' : 'bio'}`);
+            if (activeBtn) activeBtn.className = 'filter-btn bg-white text-slate-900 shadow-sm px-3 py-1.5 rounded-xl text-xs font-extrabold transition';
+
+            renderExperimentCatalog(subject);
+        }
+
+        // ----------------------------------------------------
+        // Section 3: Power Apps Blueprint Inspector Logic
+        // ----------------------------------------------------
+        function switchAppScreen(screenKey) {
+            // Update button styles
+            ['login', 'exp', 'run'].forEach(k => {
+                const b = document.getElementById(`btn-scr-${k}`);
+                if (b) b.className = k === screenKey 
+                    ? 'flex-1 py-1.5 rounded-lg bg-brand-green text-slate-900 font-black transition' 
+                    : 'flex-1 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition';
+            });
+
+            const screenData = powerAppsScreensData[screenKey];
+            const treeList = document.getElementById('treeControlsList');
+            treeList.innerHTML = '';
+
+            screenData.controls.forEach((ctrl, index) => {
+                const item = document.createElement('div');
+                item.className = `p-2 rounded-xl cursor-pointer transition flex items-center justify-between ${index === 0 ? 'bg-slate-800 text-brand-green font-bold' : 'hover:bg-slate-800 text-slate-300'}`;
+                item.onclick = () => selectPowerAppsControl(ctrl, item);
+                item.innerHTML = `
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-cube text-purple-400"></i> ${ctrl.name}
+                    </span>
+                    <span class="text-[9px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-400">${ctrl.type}</span>
+                `;
+                treeList.appendChild(item);
+            });
+
+            // Update Device Canvas View
+            document.getElementById('canvasDeviceView').innerHTML = screenData.viewHtml;
+
+            // Default selection
+            selectPowerAppsControl(screenData.controls[0]);
+        }
+
+        function selectPowerAppsControl(ctrl, element = null) {
+            if (element) {
+                document.querySelectorAll('#treeControlsList > div').forEach(el => {
+                    el.className = 'p-2 rounded-xl cursor-pointer transition flex items-center justify-between hover:bg-slate-800 text-slate-300';
+                });
+                element.className = 'p-2 rounded-xl cursor-pointer transition flex items-center justify-between bg-slate-800 text-brand-green font-bold';
+            }
+
+            document.getElementById('inspectorControlName').value = ctrl.name;
+            document.getElementById('activeControlTag').innerText = ctrl.type;
+            document.getElementById('inspectorPowerFx').innerText = ctrl.fx;
+            document.getElementById('inspectorControlDesc').innerText = ctrl.desc;
+        }
+
+        function copyPowerFxCode() {
+            const fx = document.getElementById('inspectorPowerFx').innerText;
+            navigator.clipboard.writeText(fx);
+            triggerToast('تم نسخ كود الـ Power Fx إلى الحافظة بنجاح 📋', 'success');
+        }
+
+        // ----------------------------------------------------
+        // Section 4: Chart.js Analytics Logic
+        // ----------------------------------------------------
+        function initCharts() {
+            // Chart 1: Time per Experiment (Bar)
+            const ctx1 = document.getElementById('timeChart').getContext('2d');
+            timeChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['قانون لوشاتلييه (كيمياء)', 'قانون أوم (فيزياء)', 'استخلاص DNA (أحياء)'],
+                    datasets: [{
+                        label: 'المتوسط بالدقائق',
+                        data: [10, 8, 12],
+                        backgroundColor: ['#00b862', '#3b82f6', '#8b5cf6'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 15 }
+                    }
+                }
+            });
+
+            // Chart 2: Safety Radar Chart
+            const ctx2 = document.getElementById('safetyChart').getContext('2d');
+            safetyChartInstance = new Chart(ctx2, {
+                type: 'radar',
+                data: {
+                    labels: ['نظارات الواقية', 'القفازات الطبية', 'التعامل مع الأحماض', 'الالتزام بالمؤقت', 'إغلاق الأجهزة'],
+                    datasets: [{
+                        label: 'نسبة التقديم (%)',
+                        data: [98, 95, 99, 92, 97],
+                        backgroundColor: 'rgba(0, 184, 98, 0.2)',
+                        borderColor: '#00b862',
+                        pointBackgroundColor: '#00b862'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: { min: 80, max: 100 }
+                    }
+                }
+            });
+
+            // Chart 3: Weekly Activity Line Chart
+            const ctx3 = document.getElementById('activityChart').getContext('2d');
+            activityChartInstance = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4', 'الأسبوع 5', 'الأسبوع 6'],
+                    datasets: [{
+                        label: 'عدد الجلسات التفاعلية',
+                        data: [120, 190, 280, 350, 410, 485],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+
+        function updateChartDataset(subject) {
+            document.querySelectorAll('.chart-tab').forEach(b => b.className = 'chart-tab text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-extrabold transition');
+            document.getElementById(`chart-btn-${subject}`).className = 'chart-tab bg-white text-slate-900 shadow-sm px-3 py-1.5 rounded-xl text-xs font-extrabold transition';
+
+            if (subject === 'chem') {
+                timeChartInstance.data.datasets[0].data = [10, 0, 0];
+            } else if (subject === 'phys') {
+                timeChartInstance.data.datasets[0].data = [0, 8, 0];
+            } else {
+                timeChartInstance.data.datasets[0].data = [10, 8, 12];
+            }
+            timeChartInstance.update();
+            triggerToast('تم تحديث الرسوم البيانية بناءً على المادة المختارة', 'info');
+        }
+
+        // ----------------------------------------------------
+        // Section 5: Simulator Workbench Logic
+        // ----------------------------------------------------
+        function loadExperimentToSimulator(expId) {
+            const exp = siscCommandsData.find(item => item.id === expId);
+            if (!exp) return;
+            currentSelectedExperiment = exp;
+            renderSimulatorWorkbench(exp);
+            scrollToSection('simulator');
+            triggerToast(`تم تحميل تجربة: ${exp.title} بنجاح ✅`, 'success');
+        }
+
+        function renderSimulatorWorkbench(exp) {
+            document.getElementById('simTitle').innerText = exp.title;
+            document.getElementById('simSubjectBadge').innerText = exp.subject;
+            
+            const stepsContainer = document.getElementById('simStepsContainer');
+            stepsContainer.innerHTML = '';
+
+            exp.steps.forEach((stepText, idx) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'p-3 rounded-2xl border border-slate-200 bg-slate-50 flex items-start gap-3 transition hover:bg-white hover:border-brand-green cursor-pointer';
+                stepDiv.innerHTML = `
+                    <div class="w-6 h-6 rounded-full bg-brand-green text-slate-900 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</div>
+                    <p class="text-xs text-slate-700 font-bold leading-relaxed">${stepText}</p>
+                `;
+                stepsContainer.appendChild(stepDiv);
+            });
+
+            // Reset Timer
+            simTimeLeft = exp.timeMinutes * 60;
+            updateSimTimerDisplay();
+        }
+
+        function updateSimTimerDisplay() {
+            const mins = Math.floor(simTimeLeft / 60);
+            const secs = simTimeLeft % 60;
+            document.getElementById('simTimerDisplay').innerText = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            
+            const pct = (simTimeLeft / (currentSelectedExperiment.timeMinutes * 60)) * 100;
+            document.getElementById('timerProgressBar').style.width = `${pct}%`;
+        }
+
+        function startSimTimer() {
+            if (simTimerInterval) return;
+            simTimerInterval = setInterval(() => {
+                if (simTimeLeft > 0) {
+                    simTimeLeft--;
+                    updateSimTimerDisplay();
+                } else {
+                    pauseSimTimer();
+                    triggerToast('انتهى الوقت المخصص للتجربة!', 'warning');
+                }
+            }, 1000);
+        }
+
+        function pauseSimTimer() {
+            clearInterval(simTimerInterval);
+            simTimerInterval = null;
+        }
+
+        function resetSimTimer() {
+            pauseSimTimer();
+            simTimeLeft = currentSelectedExperiment.timeMinutes * 60;
+            updateSimTimerDisplay();
+        }
+
+        function simulatePhotoCapture() {
+            const box = document.getElementById('photoCaptureBox');
+            box.innerHTML = `
+                <div class="text-brand-green font-bold text-xs flex items-center justify-center gap-2 py-2">
+                    <i class="fa-solid fa-circle-check text-xl"></i>
+                    <span>تم إرفاق صورة نتيجة النتيجة بنجاح! (Photo_001.png)</span>
+                </div>
+            `;
+            triggerToast('تم توثيق التقاط الصورة بنجاح 📸', 'success');
+        }
+
+        function submitExperimentResults() {
+            pauseSimTimer();
+            triggerToast('جاري حفظ التقرير في قائمة SharePoint SISC_Commands...', 'info');
+            setTimeout(() => {
+                triggerToast('تم التقييم وإرسال التقرير للمعلم بنجاح! 🎉', 'success');
+            }, 1800);
+        }
+
+        // ----------------------------------------------------
+        // Section 6: AI Chat Assistant Simulator Logic
+        // ----------------------------------------------------
+        function askGemini(question) {
+            document.getElementById('aiInput').value = question;
+            sendUserAiQuestion();
+        }
+
+        function sendUserAiQuestion() {
+            const input = document.getElementById('aiInput');
+            const chat = document.getElementById('aiChatBubble');
+            const q = input.value.trim();
+            if (!q) return;
+
+            chat.innerHTML = `<span class="text-purple-300 font-bold">سؤالك:</span> ${q}<br><br><span class="text-emerald-400 font-bold">Gemini:</span> جاري تحليل البروتوكول...`;
+
+            setTimeout(() => {
+                let reply = 'تأكد دائماً من ارتداء القفازات والنظارات الواقية والتعامل بحذر داخل المعمل الافتراضي.';
+                if (q.includes('كلوريد الكوبالت')) {
+                    reply = 'مادة كلوريد الكوبالت مادة كيميائية يجب التعامل معها بحذر والوقاية من ملامسة الجلد مع غسل اليدين جيداً بعد التجربة.';
+                } else if (q.includes('الأحماض')) {
+                    reply = 'في حالة ملامسة الحمض للبشرة، قم بغسل المنطقة فوراً بكميات كبيرة من الماء الجاري لمدة 15 دقيقة وإبلاغ المعلم.';
+                } else if (q.includes('الكحول')) {
+                    reply = 'الكحول البارد يساعد على ترعيب الـ DNA وترسيبه في صورة خيوط بيضاء واضحة يمكن فصلها بالأنبوب.';
+                }
+                chat.innerHTML = `<span class="text-purple-300 font-bold">سؤالك:</span> ${q}<br><br><span class="text-emerald-400 font-bold">Gemini AI:</span> ${reply}`;
+            }, 1000);
+
+            input.value = '';
+        }
+
+        // ----------------------------------------------------
+        // QR Scanner Modal Handlers
+        // ----------------------------------------------------
+        function openQrModal() {
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function openQrModalWithCode(code) {
+            openQrModal();
+            triggerToast(`رمز الاستجابة: ${code}`, 'info');
+        }
+
+        function simulateQrScan(qrCode) {
+            closeQrModal();
+            const foundExp = siscCommandsData.find(item => item.qrCode === qrCode);
+            if (foundExp) {
+                loadExperimentToSimulator(foundExp.id);
+            } else {
+                triggerToast('عذراً! رمز QR غير مسجل في النظام', 'warning');
+            }
+        }
+
+        // ----------------------------------------------------
+        // Utilities & Helper Functions
+        // ----------------------------------------------------
+        function scrollToSection(secId) {
+            const el = document.getElementById(secId);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function triggerToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            const icon = document.getElementById('toastIcon');
+
+            msg.innerText = message;
+            if (type === 'success') {
+                icon.className = 'fa-solid fa-circle-check text-brand-green text-xl';
+            } else if (type === 'warning') {
+                icon.className = 'fa-solid fa-triangle-exclamation text-amber-400 text-xl';
+            } else {
+                icon.className = 'fa-solid fa-info-circle text-blue-400 text-xl';
+            }
+
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3200);
+        }
+    </script>
+</body>
+</html>
