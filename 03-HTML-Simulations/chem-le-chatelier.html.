@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكاة تجربة مبدأ لوشاتلييه - ثانوية قريش</title>
+    <!-- استدعاء Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- استدعاء أيقونات FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 sm:p-8">
+
+    <!-- الحاوية الرئيسية للمحاكاة -->
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+        
+        <!-- الترويسة -->
+        <header class="bg-slate-900 text-white p-6 flex justify-between items-center">
+            <div>
+                <span class="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/30 font-bold">كيمياء 2</span>
+                <h1 class="text-2xl font-bold mt-2">تجربة أثر الحرارة على الاتزان (مبدأ لوشاتلييه)</h1>
+                <p class="text-xs text-slate-400 mt-1">مختبر ثانوية قريش الذكي - New-Lab-Quraish</p>
+            </div>
+            <!-- زر العودة لصفحة المدخل الرئيسية -->
+            <a href="../index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-4 py-2 rounded-xl transition flex items-center gap-2">
+                <i class="fa-solid fa-arrow-right"></i> العودة للمدخل
+            </a>
+        </header>
+
+        <!-- منطقة المحاكاة والتفاعل -->
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            
+            <!-- لوحة التحكم والتعليمات -->
+            <div class="space-y-4">
+                <h2 class="text-lg font-bold text-slate-900 border-b pb-2">خطوات التجربة والتحكم:</h2>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    اضغط على أزرار الحرارة لملاحظة تغير لون محلول كلوريد الكوبالت نتيجة انزياح موقع الاتزان:
+                </p>
+
+                <!-- أزرار التحكم بالحرارة -->
+                <div class="flex gap-3">
+                    <button onclick="updateTemperature('heat')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-fire"></i> تسخين
+                    </button>
+                    <button onclick="updateTemperature('cool')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-snowflake"></i> تبريد
+                    </button>
+                </div>
+
+                <!-- زر إعادة الضبط -->
+                <button onclick="updateTemperature('reset')" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-xl transition text-xs">
+                    🔄 إعادة الاتزان الابتدائي
+                </button>
+
+                <!-- حالة التفاعل الحالية -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">الملاحظة العلمية:</span>
+                    <p id="statusText" class="text-sm font-semibold text-purple-600">المحلول في حالة اتزان (لون بنفسجي).</p>
+                </div>
+            </div>
+
+            <!-- أنبوب الاختبار الافتراضي -->
+            <div class="bg-slate-900 p-8 rounded-2xl flex flex-col items-center justify-center min-h-[300px]">
+                <div class="w-16 h-56 border-4 border-slate-400/40 rounded-b-full relative overflow-hidden bg-slate-800/50 shadow-inner">
+                    <!-- سائل المحاكاة التفاعلي -->
+                    <div id="liquid" class="absolute bottom-0 w-full h-3/4 bg-purple-600 transition-all duration-700 ease-in-out opacity-90"></div>
+                </div>
+                <span class="text-xs text-slate-400 mt-4 font-mono">[Co(H2O)6]2+ ⇌ [CoCl4]2-</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- البرمجة التفاعلية بلغة JavaScript -->
+    <script>
+        function updateTemperature(action) {
+            const liquid = document.getElementById('liquid');
+            const statusText = document.getElementById('statusText');
+
+            if (action === 'heat') {
+                liquid.style.backgroundColor = '#2563eb';
+                statusText.innerText = 'عند التسخين: يمتص التفاعل الحرارة وينزاح الاتزان نحو تكوين أيونات الكوبالت الزرقاء.';
+                statusText.className = 'text-sm font-semibold text-blue-600';
+            } else if (action === 'cool') {
+                liquid.style.backgroundColor = '#ec4899';
+                statusText.innerText = 'عند التبريد: ينبعث الحرارة وينزاح الاتزان نحو تكوين أيونات الكوبالت الورديّة.';
+                statusText.className = 'text-sm font-semibold text-pink-600';
+            } else {
+                liquid.style.backgroundColor = '#9333ea';
+                statusText.innerText = 'المحلول في حالة اتزان (لون بنفسجي).';
+                statusText.className = 'text-sm font-semibold text-purple-600';
+            }
+        }
+    </script>
+
+</body>
+</html>
+
