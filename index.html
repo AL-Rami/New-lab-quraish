@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة المختبر التفاعلية الذكية - ثانوية قريش</title>
+    <title>منصة المختبر الذكية - ثانوية قريش</title>
     <!-- استدعاء إطار عمل Tailwind CSS للتنسيق -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -12,27 +12,36 @@
     <!-- الهيدر الرئيسي للمنصة -->
     <header class="bg-blue-900 text-white py-6 px-4 text-center shadow-lg">
         <h1 class="text-3xl font-bold">منصة المختبر التفاعلية الذكية</h1>
-        <p class="text-sm mt-2 opacity-90">ثانوية قريش - New-Lab-Quraish</p>
+        <p class="text-sm mt-2 opacity-90">New-Lab-Quraish - ثانوية قريش</p>
     </header>
 
     <!-- المحتوى الرئيسي للمنصة -->
     <main class="max-w-4xl mx-auto my-8 p-6 bg-white rounded-xl shadow-md">
-        <h2 class="text-2xl font-semibold text-blue-950 mb-4 border-b pb-2">فهرس المحاكيات والبيانات</h2>
-        
-        <p class="mb-6 text-gray-600">اختر الوجهة للبدء في تشغيل التجارب والمحاكيات العلمية:</p>
+        <h2 class="text-2xl font-semibold text-blue-950 mb-4 border-b pb-2">سجل المحاكاة والبيانات</h2>
+        <p class="mb-6 text-gray-600">اختر الوجهة للبدء في تشغيل التجارب والمحاكاة العلمية:</p>
 
+        <!-- شبكة بطاقات الروابط والتجارب -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- رابط إلى مجلد المحاكيات التفاعلية -->
-            <a href="./03-HTML-Simulations/" class="p-4 border rounded-lg hover:bg-blue-50 border-blue-200 transition">
-                <h3 class="font-bold text-blue-800 text-lg">🧪 المحاكيات التفاعلية</h3>
+            
+            <!-- 1. رابط مباشر لمحاكاة مبدأ لوشاتلييه (جديد) -->
+            <a href="./03-HTML-Simulations/chem-le-chatelier.html" class="p-4 border border-blue-200 rounded-lg hover:bg-blue-50 transition duration-200 block bg-blue-50/30">
+                <div class="text-xs font-bold text-emerald-600 mb-1">كيمياء 2</div>
+                <h3 class="font-bold text-blue-800 text-lg">🧪 تجربة مبدأ لوشاتلييه</h3>
+                <p class="text-sm text-gray-600 mt-1">محاكاة تفاعلية لأثر الحرارة على اتزان كلوريد الكوبالت.</p>
+            </a>
+
+            <!-- 2. رابط إلى مجلد المحاكاة التفاعلية العام -->
+            <a href="./03-HTML-Simulations/" class="p-4 border rounded-lg hover:bg-blue-50 transition duration-200 block">
+                <h3 class="font-bold text-blue-800 text-lg">📁 جميع المحاكيات التفاعلية</h3>
                 <p class="text-sm text-gray-500 mt-1">عرض وتجربة محاكيات الفيزياء والكيمياء والأحياء.</p>
             </a>
 
-            <!-- رابط إلى سجل البيانات التوثيقي -->
-            <a href="./01-Documentation/01-PROJECT-MASTER.md" class="p-4 border rounded-lg hover:bg-blue-50 border-blue-200 transition">
-                <h3 class="font-bold text-blue-800 text-lg">📑 توثيق المشروع</h3>
+            <!-- 3. رابط إلى سجل البيانات التوثيقي -->
+            <a href="./01-Documentation/01-PROJECT-MASTER.md" class="p-4 border rounded-lg hover:bg-blue-50 transition duration-200 block md:col-span-2">
+                <h3 class="font-bold text-blue-800 text-lg">📄 توثيق المشروع</h3>
                 <p class="text-sm text-gray-500 mt-1">الاطلاع على معمارية ودستور المنصة المعتمد.</p>
             </a>
+
         </div>
     </main>
 
