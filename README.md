@@ -1,22 +1,22 @@
-# منصة المختبر التفاعلية الذكية - ثانوية قريش `New-Lab-Quraish`
+# منصة المختبر التفاعلية الذكية - ثانوية قريش (New-Lab-Quraish)
 
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
-![Platform](https://img.shields.io/badge/Platform-Power_Pages_%7C_Power_Apps_%7C_SharePoint-blue)
+![Status Active](https://img.shields.io/badge/Status-Active-brightgreen)
+![Platform](https://img.shields.io/badge/Platform-Power%20Pages%20%7C%20Power%20Apps%20%7C%20SharePoint-blue)
 
-مستودع رمزي مركزي لإدارة وتطوير منصة المختبر التفاعلية الذكية لثانوية قريش، والتي تربط المحتوى العلمي المنهجي بالتحليل والمحاكاة التفاعلية.
+مستودع برمجي مركزي لإدارة وتطوير منصة المختبر التفاعلية الذكية لثانوية قريش، والتي تربط المحتوى العلمي المنهجي بالبطاقات التفاعلية الخفيفة والتحليل الذكي.
 
 ---
 
-## 🏗️ الهيكل البرمجي للمشروع (هيكل المجلد)
+## 🏗️ الهيكل البرمجي المعتمد للمشروع (`Lab-Project-Master`)
 
 ```text
 Lab-Project-Master/
-├── 01-Documentation/        # ملفات التوثيق والدستور البرمجي للمشروع
-├── 02-PowerPages/           # أكواد وتصاميم بوابة الطلاب والمعلمين
-├── 03-HTML-Simulations/     # ملفات المحاكاة التفاعلية (HTML/JS/CSS)
-├── 04-SharePoint/           # مخططات البيانات وقوائم SISC
-├── 05-PowerApps/            # تطبيق إدارة المختبر للتقنيين والإدارة
-├── 06-PowerAutomate/        # تدفقات الأتمتة والربط البرمجي
-├── 07-AI-Copilot/           # إعدادات واجهات الذكاء الاصطناعي
-├── 08-Assets/               # الصور والشعارات والملفات المساعدة
-└── 09-Reports/              # تقارير الأداء وسجلات التشغيل
+├── 00-Kitchen/            # مسودة وتجارب المطبخ (تخضع لقوانين الامتدادات المزدوجة)
+├── 01-Documentation/      # ملفات التوثيق الإدارية والدستور البرمجي (01 إلى 06)
+├── 02-PowerPages/         # واجهات المواد الخمس والراوتر الرئيسي (HTML/JS/CSS)
+├── 03-PowerApps/          # تطبيقات التحكم والإدارة لمحضر المختبر والمعلم
+├── 04-SharePoint/         # قواعد البيانات والسكربتات (SISC_Experiments / SISC_StudentSubmissions)
+├── 05-Assets/             # الشعارات والصور والوسائط
+├── 06-AI/                 # مطالبات وسيناريوهات الذكاء الاصطناعي (Gemini Engine)
+├── 07-Reports/            # لوحات المؤشرات والتقارير التعليمية الحية
+└── 08-Archive/            # الأرشيف والملفات المؤجلة/القديمة
